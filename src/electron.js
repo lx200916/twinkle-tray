@@ -521,7 +521,7 @@ const doHotkey = (hotkey) => {
 
     try {
       //refreshMonitors(false)
-      analyticsUsage.UsedHotkeys++
+      // analyticsUsage.UsedHotkeys++
       if (hotkey.monitor === "all" || (settings.linkedLevelsActive && hotkey.monitor != "turn_off_displays")) {
 
         let linkedLevelVal = false
@@ -997,6 +997,7 @@ refreshDDCCI = async () => {
         try {
           // Get brightness current/max
           const brightnessValues = ddcci._getVCP(monitor, 0x10)
+          const input=ddcci._getVCP(monitor, 0x60)[0]
 
           let ddcciInfo = {
             name: makeName(monitor, `${T.getString("GENERIC_DISPLAY_SINGLE")} ${local + 1}`),
@@ -1008,7 +1009,8 @@ refreshDDCCI = async () => {
             brightnessRaw: -1,
             type: 'ddcci',
             min: 0,
-            max: 100
+            max: 100,
+            input: input
           }
 
           const hwid = monitor.split("#")
@@ -1039,7 +1041,8 @@ refreshDDCCI = async () => {
                   brightness: checkVCP(monitor, 0x13),
                   gain: (checkVCP(monitor, 0x16) && checkVCP(monitor, 0x18) && checkVCP(monitor, 0x1A)),
                   contrast: checkVCP(monitor, 0x12),
-                  powerState: checkVCP(monitor, 0xD6)
+                  powerState: checkVCP(monitor, 0xD6),
+                  input: checkVCP(monitor,0x60)
                 }
               }
 
@@ -1213,7 +1216,33 @@ function updateBrightnessThrottle(id, level, useCap = true, sendUpdate = true) {
 }
 
 
+function updateInput(index,inputNum){
+  let monitor = false
+  if (typeof index == "string" && index * 1 != index) {
+    monitor = Object.values(monitors).find((display) => {
+      return display.id.indexOf(index) === 0
+    })
+  } else {
+    if (index >= Object.keys(monitors).length) {
+      console.log("updateBrightness: Invalid monitor")
+      return false;
+    }
+    monitor = monitors[index]
 
+  }
+  try {
+    if (monitor.type == "ddcci") {
+      ddcci._setVCP(monitor.id,0x60 ,inputNum)
+    } else if (monitor.type == "wmi") {
+      // exec(`powershell.exe (Get-WmiObject -Namespace root\\wmi -Class WmiMonitorBrightnessMethods).wmisetbrightness(0, ${normalized})"`)
+      console.error("Not Supoort on WMI")
+    }
+    // setTrayPercent()
+  } catch (e) {
+    debug.error("Could not update input", e)
+  }
+
+}
 
 function updateBrightness(index, level, useCap = true) {
 
@@ -1302,8 +1331,14 @@ function transitionBrightness(level, eventMonitors = []) {
 }
 
 function sleepDisplays() {
-  analyticsUsage.UsedSleep++
-  exec(`powershell.exe (Add-Type '[DllImport(\\"user32.dll\\")]^public static extern int SendMessage(int hWnd, int hMsg, int wParam, int lParam);' -Name a -Pas)::SendMessage(-1,0x0112,0xF170,2)`)
+  // analyticsUsage.UsedSleep++
+  for (let key in monitors) {
+    const monitor = monitors[key]
+  if (monitor.type == "ddcci") {
+    ddcci._setVCP(monitor.id,0xD6,5)
+  } else{  exec(`powershell.exe (Add-Type '[DllImport(\\"user32.dll\\")]^public static extern int SendMessage(int hWnd, int hMsg, int wParam, int lParam);' -Name a -Pas)::SendMessage(-1,0x0112,0xF170,2)`)
+}
+}
 }
 
 
@@ -1408,6 +1443,10 @@ ipcMain.on('request-colors', () => {
 ipcMain.on('update-brightness', function (event, data) {
   console.log(`Update brightness recieved: ${data.index} - ${data.level}`)
   updateBrightness(data.index, data.level)
+})
+ipcMain.on('update-input',function(event,data){
+console.log(`Update Input Source recieved:${data.index}-${data.input}`)
+updateInput(data.index,data.input)
 })
 
 ipcMain.on('request-monitors', function (event, arg) {

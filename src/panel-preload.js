@@ -68,6 +68,13 @@ function updateBrightness(index, level) {
         level
     })
 }
+function updateInput(index,input){
+    if(!window.showPanel) return false;
+    ipc.send('update-input', {
+        index,
+        input
+    })
+}
 
 function openSettings() {
     setPanelVisibility(false)
@@ -255,6 +262,7 @@ browser.webContents.once('dom-ready', () => {
 window.ipc = ipc
 window.thisWindow = browser
 window.updateBrightness = updateBrightness
+window.updateInput = updateInput
 window.requestMonitors = requestMonitors
 window.openSettings = openSettings
 window.sendSettings = sendSettings

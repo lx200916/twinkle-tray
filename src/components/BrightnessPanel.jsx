@@ -23,7 +23,7 @@ export default class BrightnessPanel extends PureComponent {
           return (<div key={monitor.key}></div>)
         } else {
           return (
-            <Slider name={this.getMonitorName(monitor, this.state.names)} id={monitor.id} level={monitor.brightness} min={0} max={100} num={monitor.num} monitortype={monitor.type} hwid={monitor.key} key={monitor.key} onChange={this.handleChange} />
+            <Slider name={this.getMonitorName(monitor, this.state.names)} id={monitor.id} level={monitor.brightness} min={0} max={100} num={monitor.num} monitortype={monitor.type} hwid={monitor.key} key={monitor.key} onChange={this.handleChange} input={monitor.input}/>
           )
         }
       })
@@ -70,12 +70,13 @@ export default class BrightnessPanel extends PureComponent {
   }
 
   // Handle <Slider> changes
-  handleChange = (level, slider) => {
+  handleChange = (level, slider,input) => {
     const monitors = Object.assign(this.state.monitors, {})
     const sliderMonitor = monitors[slider.props.hwid]
 
     console.log(sliderMonitor)
     console.log(level)
+    console.log(input)
 
     if (this.numMonitors && this.state.linkedLevelsActive) {
       // Update all monitors (linked)
@@ -96,7 +97,12 @@ export default class BrightnessPanel extends PureComponent {
       })
     } else if (this.numMonitors > 0) {
       // Update single monitor
-      if (sliderMonitor) sliderMonitor.brightness = level;
+      if (sliderMonitor) {sliderMonitor.brightness = level;
+      if(sliderMonitor.input!=input){
+        sliderMonitor.input=input
+        window.updateInput(sliderMonitor.id,input)
+      }
+      }
       this.setState({
         monitors
       }, () => {
