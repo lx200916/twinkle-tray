@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, Component } from "react"
 import PropTypes from 'prop-types';
-import DP from '../assets/DP.png'
+import DP from '../assets/Displayport.png'
 import HDMI from '../assets/HDMI.png'
 import USBC from '../assets/usb-c-port.png'
 export default class Slider extends Component {

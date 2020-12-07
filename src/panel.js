@@ -18,7 +18,7 @@ window.addEventListener("enableDemoMode", () => {
         "localID": 0,
         "max": 100,
         "min": 0,
-        "name": "XB270HU",
+        "name": "Q2790R3",
         "num": 0,
         "type": "ddcci"
     }, {
